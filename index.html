@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parminder Sharma | Portfolio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <style>
         /* Modern Premium Variables */
         :root {
@@ -33,7 +34,7 @@
         }
 
         html {
-            scroll-behavior: smooth;
+            /* scroll-behavior: smooth; Removed to allow Lenis to handle custom physics */
         }
 
         /* 3D Globe Canvas */
@@ -352,29 +353,26 @@
            MOBILE OPTIMIZATIONS (FIX CUTOFF ISSUES)
            ========================================= */
         @media (max-width: 768px) {
-            /* 1. Convert Tech Grid into a horizontal swipe carousel */
             .tech-grid {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 overflow-x: auto;
                 scroll-snap-type: x mandatory;
                 width: 100vw; 
-                margin-left: -20px; /* Pull it to screen edge */
-                padding: 10px 20px 30px 20px; /* Add breathing room */
+                margin-left: -20px; 
+                padding: 10px 20px 30px 20px; 
                 scroll-padding-left: 20px;
                 gap: 15px;
             }
             
-            /* Hide scrollbars for a clean look */
             .tech-grid::-webkit-scrollbar { display: none; }
             .tech-grid { -ms-overflow-style: none; scrollbar-width: none; }
 
             .tech-card {
-                flex: 0 0 80vw; /* Take up 80% of screen width per card */
+                flex: 0 0 80vw; 
                 scroll-snap-align: start;
             }
 
-            /* 2. Make the Songs List vertically scrollable within itself */
             .songs-list {
                 max-height: 55vh;
                 overflow-y: auto;
@@ -383,12 +381,10 @@
             .songs-list::-webkit-scrollbar { display: none; }
             .songs-list { -ms-overflow-style: none; scrollbar-width: none; }
 
-            /* 3. Give content more breathing room from the top navigation */
             .content-wrapper {
                 padding-top: 40px; 
             }
 
-            /* 4. Adjust typography to save vertical space */
             .section-title {
                 font-size: clamp(32px, 8vw, 40px);
                 line-height: 1.1;
@@ -616,9 +612,30 @@
         document.addEventListener("DOMContentLoaded", () => {
             
             /* =========================================================
-               THREE.JS SETUP (EARTH, MOON, SHINING ORB STARS, SATELLITES)
+               1. INITIALIZE LENIS (Smooth Scrolling Engine)
             ========================================================= */
-            // Mobile Optimization Check
+            let lenis;
+            if (typeof Lenis !== 'undefined') {
+                lenis = new Lenis({
+                    duration: 1.2,
+                    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+                    smoothWheel: true,
+                    wheelMultiplier: 1,
+                    touchMultiplier: 2
+                });
+
+                // Make nav links use smooth scroll
+                document.querySelectorAll('nav a').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        lenis.scrollTo(this.getAttribute('href'));
+                    });
+                });
+            }
+
+            /* =========================================================
+               2. THREE.JS SETUP (EARTH, MOON, STARS, SATELLITES)
+            ========================================================= */
             const isMobile = window.innerWidth <= 768;
 
             const canvas = document.getElementById('globe-canvas');
@@ -629,7 +646,6 @@
 
             const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            // Limit pixel ratio on mobile to save battery and boost performance
             renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 1.5) : window.devicePixelRatio);
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); 
@@ -648,10 +664,8 @@
             const moonOrbit = new THREE.Group();
             solarSystem.add(moonOrbit);
 
-            // Dynamically lower geometry details if on mobile
             const earthSegments = isMobile ? 24 : 32;
 
-            // --- 1. EARTH ---
             const coreGeometry = new THREE.SphereGeometry(14.8, earthSegments, earthSegments);
             const coreMaterial = new THREE.MeshBasicMaterial({ color: 0x050505, transparent: true, opacity: 0.95 });
             earthGroup.add(new THREE.Mesh(coreGeometry, coreMaterial));
@@ -673,8 +687,6 @@
                 earthGroup.add(new THREE.Mesh(new THREE.SphereGeometry(15.1, earthSegments, earthSegments), mapMaterial));
             });
 
-
-            // --- 2. MOON ---
             const moonSegments = isMobile ? 24 : 32;
             const moonGeometry = new THREE.SphereGeometry(2.5, moonSegments, moonSegments);
             const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.8 });
@@ -689,8 +701,6 @@
                 moonMaterial.needsUpdate = true;
             });
 
-
-            // --- 3. STARFIELD (CIRCULAR SHINING ORBS) ---
             function createStarTexture() {
                 const canvas = document.createElement('canvas');
                 canvas.width = 32;
@@ -715,7 +725,6 @@
             }
 
             const starsGeometry = new THREE.BufferGeometry();
-            // Greatly reduce stars on mobile to save processing power
             const starsCount = isMobile ? 500 : 1500; 
             const posArray = new Float32Array(starsCount * 3);
             
@@ -742,19 +751,13 @@
             const starMesh = new THREE.Points(starsGeometry, starsMaterial);
             scene.add(starMesh);
 
-
-            // --- 4. CUSTOM METALLIC SATELLITES ---
             const satellites = [];
-            
             function createSatellite() {
                 const satGroup = new THREE.Group();
-                
                 const satSegments = isMobile ? 8 : 16;
                 const bodyGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.5, satSegments);
                 const bodyMat = new THREE.MeshStandardMaterial({ 
-                    color: 0xe0e0e0, 
-                    metalness: 1.0,  
-                    roughness: 0.2   
+                    color: 0xe0e0e0, metalness: 1.0, roughness: 0.2   
                 });
                 const body = new THREE.Mesh(bodyGeo, bodyMat);
                 body.rotation.z = Math.PI / 2;
@@ -762,10 +765,7 @@
 
                 const panelGeo = new THREE.BoxGeometry(0.8, 0.02, 0.4);
                 const panelMat = new THREE.MeshBasicMaterial({ 
-                    color: 0x00ffff, 
-                    wireframe: true, 
-                    transparent: true, 
-                    opacity: 0.8 
+                    color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.8 
                 });
                 
                 const panel1 = new THREE.Mesh(panelGeo, panelMat);
@@ -779,7 +779,6 @@
                 return satGroup;
             }
 
-            // Only spawn 2 satellites on mobile instead of 3
             const satCount = isMobile ? 2 : 3;
             for(let i=0; i<satCount; i++) {
                 const satOrbit = new THREE.Group();
@@ -793,7 +792,6 @@
                 satMesh.rotation.y = Math.random() * Math.PI;
 
                 satOrbit.add(satMesh);
-                
                 satOrbit.userData = { speed: 0.0025 + Math.random() * 0.0075 };
                 
                 solarSystem.add(satOrbit);
@@ -802,43 +800,17 @@
 
             solarSystem.rotation.z = 23.5 * Math.PI / 180; 
 
-
-            // --- RESIZE LOGIC ---
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
-                // Also check if we crossed the mobile boundary on resize
                 const checkMobile = window.innerWidth <= 768;
                 renderer.setPixelRatio(checkMobile ? Math.min(window.devicePixelRatio, 1.5) : window.devicePixelRatio);
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
 
-            // --- RENDER LOOP ---
-            const renderGlobe = () => {
-                requestAnimationFrame(renderGlobe);
-                
-                earthGroup.rotation.y += 0.0008; 
-
-                moonOrbit.rotation.y += 0.002; 
-                moon.rotation.y += 0.005; 
-
-                starMesh.rotation.y += 0.0002;
-                starMesh.rotation.x += 0.0001;
-
-                satellites.forEach(sat => {
-                    sat.orbit.rotation.y += sat.orbit.userData.speed;
-                    sat.mesh.rotation.x += 0.005; 
-                    sat.mesh.rotation.y += 0.0025;
-                });
-
-                renderer.render(scene, camera);
-            };
-            renderGlobe();
-
-
             /* =========================================================
-               SCROLL LOGIC (Nav + Sections + Scroll Rotation)
+               3. SCROLL SCRUBBING LOGIC (Hooked to Render Loop)
             ========================================================= */
             const navbar = document.getElementById('navbar');
             const songViewport = document.getElementById('song-vp');
@@ -854,14 +826,18 @@
                 const scrollY = window.scrollY;
                 const vh = window.innerHeight;
 
+                // Navbar Logic
                 if (scrollY > lastScrollY && scrollY > 100) {
                     navbar.classList.add('nav-hidden');
                 } else {
                     navbar.classList.remove('nav-hidden');
                 }
-                lastScrollY = scrollY;
+                // Because LERP executes heavily, this still works beautifully
+                if (Math.abs(scrollY - lastScrollY) > 1) {
+                    lastScrollY = scrollY;
+                }
 
-                // Globe Rotation
+                // Smooth Globe Rotation
                 const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
                 const scrollProgress = scrollY / maxScroll;
                 solarSystem.rotation.y = scrollProgress * Math.PI;
@@ -939,8 +915,33 @@
                 });
             };
 
-            window.addEventListener('scroll', handleScroll);
-            handleScroll();
+            // Instead of firing on scroll event, we fire exactly every frame for perfectly smooth syncing
+            const renderGlobe = (time) => {
+                if (lenis) {
+                    lenis.raf(time);
+                }
+                
+                requestAnimationFrame(renderGlobe);
+                
+                earthGroup.rotation.y += 0.0008; 
+                moonOrbit.rotation.y += 0.002; 
+                moon.rotation.y += 0.005; 
+                starMesh.rotation.y += 0.0002;
+                starMesh.rotation.x += 0.0001;
+
+                satellites.forEach(sat => {
+                    sat.orbit.rotation.y += sat.orbit.userData.speed;
+                    sat.mesh.rotation.x += 0.005; 
+                    sat.mesh.rotation.y += 0.0025;
+                });
+
+                // Frame-perfect UI update synchronized with smooth scroll
+                handleScroll();
+
+                renderer.render(scene, camera);
+            };
+            
+            requestAnimationFrame(renderGlobe);
         });
     </script>
 
