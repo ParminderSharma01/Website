@@ -112,7 +112,6 @@
         /* Apple-Style Scrolling Layout */
         .story-section {
             position: relative;
-            height: 350vh; 
         }
 
         .sticky-viewport {
@@ -407,7 +406,7 @@
         <a href="#contact">Contact</a>
     </nav>
 
-    <section id="profile" class="story-section" style="height: 300vh;">
+    <section id="profile" class="story-section" style="height: 350vh;">
         <div class="sticky-viewport" id="profile-vp">
             <div class="content-wrapper">
                 <h1 class="section-title"><span class="gradient-text">Parminder Sharma.</span></h1>
@@ -435,7 +434,7 @@
         </div>
     </section>
 
-    <section id="tech" class="story-section" style="height: 400vh;">
+    <section id="tech" class="story-section" style="height: 450vh;">
         <div class="sticky-viewport" id="tech-vp">
             <div class="content-wrapper">
                 
@@ -504,7 +503,7 @@
         </div>
     </section>
 
-    <section id="songs" class="story-section" style="height: 400vh;">
+    <section id="songs" class="story-section" style="height: 450vh;">
         <div class="sticky-viewport" id="song-vp">
             <div class="content-wrapper">
                 
@@ -609,7 +608,6 @@
             
             /* =========================================================
                1. INITIALIZE LENIS (Smooth Scrolling Engine)
-               ** UPDATED: `wheelMultiplier` changed to 0.5 to cut speed in half
             ========================================================= */
             let lenis;
             if (typeof Lenis !== 'undefined') {
@@ -617,7 +615,7 @@
                     duration: 1.2,
                     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
                     smoothWheel: true,
-                    wheelMultiplier: 0.5, /* <-- THIS HALVES THE MOUSE SCROLL SPEED */
+                    wheelMultiplier: 0.5, 
                     touchMultiplier: 2
                 });
 
@@ -806,7 +804,8 @@
 
 
             /* =========================================================
-               3. SCROLL SCRUBBING LOGIC (Hooked to Render Loop)
+               3. SCROLL SCRUBBING LOGIC 
+               ** UPDATED: Faster entrance, longer hold duration
             ========================================================= */
             const navbar = document.getElementById('navbar');
             const songViewport = document.getElementById('song-vp');
@@ -838,7 +837,7 @@
                 const scrollProgress = scrollY / maxScroll;
                 solarSystem.rotation.y = scrollProgress * Math.PI;
 
-                // Profile Section
+                // Profile Section - Faster entrance (0.02 to 0.15), fades out very late (0.9 to 1)
                 const profSec = document.getElementById('profile');
                 const profRect = profSec.getBoundingClientRect();
                 const profP = Math.max(0, Math.min(1, -profRect.top / (profRect.height - vh)));
@@ -846,9 +845,9 @@
                 const profDetails = document.getElementById('prof-details');
                 const profViewport = document.getElementById('profile-vp');
                 
-                profDetails.style.opacity = mapRange(profP, 0.05, 0.2, 0, 1);
-                profDetails.style.transform = `translateY(${mapRange(profP, 0.05, 0.2, 100, 0)}px)`;
-                profViewport.style.opacity = mapRange(profP, 0.85, 1, 1, 0);
+                profDetails.style.opacity = mapRange(profP, 0.02, 0.15, 0, 1);
+                profDetails.style.transform = `translateY(${mapRange(profP, 0.02, 0.15, 100, 0)}px)`;
+                profViewport.style.opacity = mapRange(profP, 0.9, 1, 1, 0);
 
                 // Tech Section
                 const techSec = document.getElementById('tech');
@@ -863,12 +862,15 @@
                 techHeader.style.transform = `translateY(${mapRange(techP, 0, 0.05, 50, 0)}px)`;
 
                 techCards.forEach((card, i) => {
-                    let start = 0.05 + (i * 0.12); 
-                    let end = start + 0.15;
+                    // Start earlier, animate faster (multiplier reduced to 0.06)
+                    let start = 0.05 + (i * 0.06); 
+                    let end = start + 0.10;
                     card.style.opacity = mapRange(techP, start, end, 0, 1);
                     card.style.transform = `translateY(${mapRange(techP, start, end, 100, 0)}px)`;
                 });
-                techViewport.style.opacity = mapRange(techP, 0.85, 1, 1, 0);
+                
+                // Keep the whole layout on screen unmoving until 90% scroll depth
+                techViewport.style.opacity = mapRange(techP, 0.9, 1, 1, 0);
 
                 // Songs Section
                 const songSec = document.getElementById('songs');
@@ -882,14 +884,14 @@
                 songHeader.style.transform = `translateY(${mapRange(songP, 0, 0.05, 50, 0)}px)`;
 
                 songCards.forEach((card, i) => {
-                    let start = 0.05 + (i * 0.12);
-                    let end = start + 0.15;
+                    let start = 0.05 + (i * 0.06);
+                    let end = start + 0.10;
                     card.style.opacity = mapRange(songP, start, end, 0, 1);
                     card.style.transform = `translateY(${mapRange(songP, start, end, 100, 0)}px)`;
                 });
                 
                 if (songViewport) {
-                    songViewport.style.opacity = mapRange(songP, 0.85, 1, 1, 0);
+                    songViewport.style.opacity = mapRange(songP, 0.9, 1, 1, 0);
                 }
 
                 // Contact Section
@@ -904,11 +906,12 @@
                 contactHeader.style.transform = `translateY(${mapRange(contactP, 0, 0.05, 50, 0)}px)`;
 
                 contactCards.forEach((card, i) => {
-                    let start = 0.05 + (i * 0.12);
-                    let end = start + 0.15;
+                    let start = 0.05 + (i * 0.06);
+                    let end = start + 0.10;
                     card.style.opacity = mapRange(contactP, start, end, 0, 1);
                     card.style.transform = `translateY(${mapRange(contactP, start, end, 100, 0)}px)`;
                 });
+                // Note: The contact section does NOT have a fade out, so it anchors to the bottom.
             };
 
             const renderGlobe = (time) => {
