@@ -348,6 +348,57 @@
             max-width: 800px;
         }
 
+        /* =========================================
+           MOBILE OPTIMIZATIONS (FIX CUTOFF ISSUES)
+           ========================================= */
+        @media (max-width: 768px) {
+            /* 1. Convert Tech Grid into a horizontal swipe carousel */
+            .tech-grid {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                width: 100vw; 
+                margin-left: -20px; /* Pull it to screen edge */
+                padding: 10px 20px 30px 20px; /* Add breathing room */
+                scroll-padding-left: 20px;
+                gap: 15px;
+            }
+            
+            /* Hide scrollbars for a clean look */
+            .tech-grid::-webkit-scrollbar { display: none; }
+            .tech-grid { -ms-overflow-style: none; scrollbar-width: none; }
+
+            .tech-card {
+                flex: 0 0 80vw; /* Take up 80% of screen width per card */
+                scroll-snap-align: start;
+            }
+
+            /* 2. Make the Songs List vertically scrollable within itself */
+            .songs-list {
+                max-height: 55vh;
+                overflow-y: auto;
+                padding-right: 5px;
+            }
+            .songs-list::-webkit-scrollbar { display: none; }
+            .songs-list { -ms-overflow-style: none; scrollbar-width: none; }
+
+            /* 3. Give content more breathing room from the top navigation */
+            .content-wrapper {
+                padding-top: 40px; 
+            }
+
+            /* 4. Adjust typography to save vertical space */
+            .section-title {
+                font-size: clamp(32px, 8vw, 40px);
+                line-height: 1.1;
+                margin-bottom: 5px;
+            }
+            .section-subtitle {
+                font-size: 15px;
+                margin-bottom: 15px;
+            }
+        }
     </style>
 </head>
 <body>
