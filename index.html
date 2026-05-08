@@ -33,10 +33,6 @@
             overflow-x: hidden;
         }
 
-        html {
-            /* scroll-behavior: smooth; Removed to allow Lenis to handle custom physics */
-        }
-
         /* 3D Globe Canvas */
         #globe-canvas {
             position: fixed;
@@ -613,6 +609,7 @@
             
             /* =========================================================
                1. INITIALIZE LENIS (Smooth Scrolling Engine)
+               ** UPDATED: `wheelMultiplier` changed to 0.5 to cut speed in half
             ========================================================= */
             let lenis;
             if (typeof Lenis !== 'undefined') {
@@ -620,11 +617,10 @@
                     duration: 1.2,
                     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
                     smoothWheel: true,
-                    wheelMultiplier: 1,
+                    wheelMultiplier: 0.5, /* <-- THIS HALVES THE MOUSE SCROLL SPEED */
                     touchMultiplier: 2
                 });
 
-                // Make nav links use smooth scroll
                 document.querySelectorAll('nav a').forEach(anchor => {
                     anchor.addEventListener('click', function (e) {
                         e.preventDefault();
@@ -832,7 +828,7 @@
                 } else {
                     navbar.classList.remove('nav-hidden');
                 }
-                // Because LERP executes heavily, this still works beautifully
+                
                 if (Math.abs(scrollY - lastScrollY) > 1) {
                     lastScrollY = scrollY;
                 }
@@ -915,7 +911,6 @@
                 });
             };
 
-            // Instead of firing on scroll event, we fire exactly every frame for perfectly smooth syncing
             const renderGlobe = (time) => {
                 if (lenis) {
                     lenis.raf(time);
@@ -935,9 +930,7 @@
                     sat.mesh.rotation.y += 0.0025;
                 });
 
-                // Frame-perfect UI update synchronized with smooth scroll
                 handleScroll();
-
                 renderer.render(scene, camera);
             };
             
