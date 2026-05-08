@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parminder Sharma | Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Modern Premium Variables */
+        :root {
+            --bg-base: #0a0a0c;
+            --bg-surface: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 3D Globe Canvas */
+        #globe-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2; 
+            pointer-events: none; 
+        }
+
+        /* Subtle Background Glow */
+        .bg-glow {
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -3;
+            filter: blur(60px);
+        }
+        
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -20%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, rgba(0,0,0,0) 70%);
+            z-index: -3;
+            filter: blur(60px);
+        }
+
+        /* Glass Navigation */
+        nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            width: max-content;
+            padding: 10px 30px;
+            background: rgba(10, 10, 12, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: var(--glass-border);
+            border-radius: 50px;
+            display: flex;
+            gap: 30px;
+            z-index: 1000;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+        }
+
+        nav.nav-hidden {
+            transform: translate(-50%, -150%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-main);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        /* Apple-Style Scrolling Layout */
+        .story-section {
+            position: relative;
+            height: 350vh; 
+        }
+
+        .sticky-viewport {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            will-change: opacity;
+        }
+
+        .content-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Typography */
+        .section-title {
+            font-size: clamp(32px, 5vw, 60px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+
+        .section-subtitle {
+            font-size: clamp(16px, 1.8vw, 20px);
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            max-width: 700px;
+        }
+
+        .gradient-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientMove 5s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Tech Grid & Cards */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        .tech-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 20px;
+            padding: 25px 25px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            will-change: transform, opacity;
+        }
+
+        .tech-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+            border-radius: 20px;
+        }
+
+        .tech-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.15);
+        }
+        
+        .tech-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .tech-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .tech-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Songs Section */
+        .songs-list {
+            max-width: 700px;
+            width: 100%;
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 24px;
+            padding: 5px 25px;
+        }
+
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease;
+            border-radius: 12px;
+            will-change: transform, opacity;
+        }
+
+        .song-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            padding-left: 20px;
+        }
+
+        .song-item:last-child {
+            border-bottom: none;
+        }
+
+        .song-details-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .song-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .song-item:hover .song-cover {
+            transform: scale(1.08);
+        }
+
+        .song-info {
+            text-align: left;
+        }
+
+        .song-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .song-artist {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        
+        .play-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover {
+            background: var(--text-main);
+            color: var(--bg-base);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .profile-details, .tech-header, .tech-card, .song-header, .song-item, .contact-header, .js-contact-item {
+            opacity: 0;
+            transform: translateY(100px);
+        }
+
+        /* Contact Grid */
+        .contact-grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="globe-canvas"></canvas>
+
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <nav id="navbar">
+        <a href="#profile">Profile</a>
+        <a href="#tech">Tech</a>
+        <a href="#songs">Songs</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <section id="profile" class="story-section" style="height: 300vh;">
+        <div class="sticky-viewport" id="profile-vp">
+            <div class="content-wrapper">
+                <h1 class="section-title"><span class="gradient-text">Parminder Sharma.</span></h1>
+                
+                <div class="profile-details" id="prof-details" style="display: flex; flex-direction: column; align-items: center;">
+                    <p class="section-subtitle">Data Scientist. AI/ML Developer. Visionary.</p>
+                    <p style="font-size: clamp(16px, 2vw, 20px); max-width: 800px; color: var(--text-muted); font-weight: 300; margin: 0 auto; line-height: 1.7; text-align: center;">
+                        I am a dedicated professional with a robust background in Mathematics, Physics and Computer Application, currently pursuing my Master in Computer Application at Thapar Institute of Engineering and Technology. I have a deep passion for leveraging my data analytics and problem-solving skills to drive impactful business outcomes in the field of Data Science and Machine learning. I specialize in advanced Python-based data analysis, predictive modeling, and mathematical modeling to solve complex real-world challenges.
+                    </p>
+                    
+                    <div class="tags-container" style="justify-content: center; margin-top: 30px; max-width: 600px;">
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Python</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Machine Learning</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Deep Learning</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Data Analytics</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Mathematical Modeling</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">NLP</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">C++</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">SQL</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Mathematics</span>
+                        <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Physics</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tech" class="story-section" style="height: 400vh;">
+        <div class="sticky-viewport" id="tech-vp">
+            <div class="content-wrapper">
+                
+                <div class="tech-header" id="tech-head">
+                    <h2 class="section-title">Pro at the <span class="gradient-text">Core.</span></h2>
+                    <p class="section-subtitle">Architecting intelligent systems and immersive applications.</p>
+                </div>
+                
+                <div class="tech-grid">
+                    <div class="tech-card js-tech-card">
+                        <h3>SCOREod</h3>
+                        <p>A chatbot working on the dataset of ISRO website, which answers the query of the user related to ISRO projects.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Flutter</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Python</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-card js-tech-card">
+                        <h3>HyNieSVM - Research Paper</h3>
+                        <p>A Hybrid DistilRoBERTa, ERNIE and LinearSVM System for Automated Fake Review Detection i.e. indentify either review is AI generated or Human Written.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">AI ML DL</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Flutter</span>
+                        </div>
+                    </div>
+
+                    <div class="tech-card js-tech-card">
+                        <h3>PhysicoBird</h3>
+                        <p>A dynamic, physics-based game transitioning from concept to a full cross-platform release working on the concept of Control Theory.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Flutter</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Flame</span>
+                        </div>
+                    </div>
+
+                    <div class="tech-card js-tech-card">
+                        <h3>Cyclopy</h3>
+                        <p>Cyclopy, a cycle rental project created using php and sql in which user(student) can rent cycle using QR.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Flutter</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">SQL</span>
+                        </div>
+                    </div>
+
+                    <div class="tech-card js-tech-card">
+                        <h3>ArchiTech</h3>
+                        <p>Software development project featuring intelligent tools for drawing land shapes and dimensions.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">Software Eng.</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">UI/UX</span>
+                        </div>
+                    </div>
+
+                    <div class="tech-card js-tech-card">
+                        <h3>VITRAN-DSAI</h3>
+                        <p>AI road damage detection identifying cracks and potholes.Hands-on on YOLO and built Novel model and preprocessed data to get higher accuracy.</p>
+                        <div class="tags-container">
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">DSAI</span>
+                            <span class="tag" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); color: #fff;">YOLOv8 & v11</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="songs" class="story-section" style="height: 400vh;">
+        <div class="sticky-viewport" id="song-vp">
+            <div class="content-wrapper">
+                
+                <div class="song-header" id="song-head">
+                    <h2 class="section-title">Preet <span class="gradient-text">Rampuria.</span></h2>
+                    <p class="section-subtitle">The latest tracks. Available streaming now.</p>
+                </div>
+                
+                <div class="songs-list">
+                    <div class="song-item js-song-item">
+                        <div class="song-details-wrapper">
+                            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/73/11/19/7311191a-e4bd-10f8-b7c3-b7b40d548960/8721215889106.jpg/592x592bb.webp" alt="About Us" class="song-cover">
+                            <div class="song-info">
+                                <div class="song-title">About Us</div>
+                                <div class="song-artist">Preet Rampuria & Dhawar</div>
+                            </div>
+                        </div>
+                        <a href="https://youtu.be/A6l29_eDPOc?si=BrTGrR6Mkhkr4dxd" target="_blank" class="play-btn">Listen</a>
+                    </div>
+                    
+                    <div class="song-item js-song-item">
+                        <div class="song-details-wrapper">
+                            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/8a/4f/a8/8a4fa846-b302-e626-f99d-39a5203e71c2/8721416650239.jpg/96x96bb.webp" alt="How Do I !" class="song-cover">
+                            <div class="song-info">
+                                <div class="song-title">How Do I !</div>
+                                <div class="song-artist">Preet Rampuria</div>
+                            </div>
+                        </div>
+                        <a href="https://youtu.be/J4ulExcyXdA?si=UbPpADJ9-okUpHUz" target="_blank" class="play-btn">Listen</a>
+                    </div>
+                    
+                    <div class="song-item js-song-item">
+                        <div class="song-details-wrapper">
+                            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/e0/03/1a/e0031ae2-6d4a-cbe3-08ef-c443f65e7cad/8721253583929.jpg/592x592bb.webp" alt="Tell Me" class="song-cover">
+                            <div class="song-info">
+                                <div class="song-title">Tell Me</div>
+                                <div class="song-artist">Preet Rampuria</div>
+                            </div>
+                        </div>
+                        <a href="https://youtu.be/OvFtF68NsfI?si=cBT-qUFXUdrLGxch" target="_blank" class="play-btn">Listen</a>
+                    </div>
+                    
+                    <div class="song-item js-song-item">
+                        <div class="song-details-wrapper">
+                            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/b9/3b/d9/b93bd9c1-56c1-244e-861f-0daeca108cb7/8721215123682.jpg/592x592bb.webp" alt="Munda Kla Kla" class="song-cover">
+                            <div class="song-info">
+                                <div class="song-title">Munda Kla Kla</div>
+                                <div class="song-artist">Preet Rampuria</div>
+                            </div>
+                        </div>
+                        <a href="https://youtu.be/XqbhsE4tnCA?si=IligvO47ydgj63j4" target="_blank" class="play-btn">Listen</a>
+                    </div>
+
+                    <div class="song-item js-song-item">
+                        <div class="song-details-wrapper">
+                            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f8/ae/90/f8ae902a-0b40-918b-1497-8ba69f27f00d/8721215882848.jpg/592x592bb.webp" alt="Secrets" class="song-cover">
+                            <div class="song-info">
+                                <div class="song-title">Secrets</div>
+                                <div class="song-artist">Sehdev & Preet Rampuria</div>
+                            </div>
+                        </div>
+                        <a href="https://youtu.be/WZYVQNADZ9Q?si=RZOj4vvgT-btTBOl" target="_blank" class="play-btn">Listen</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="story-section" style="height: 300vh;">
+        <div class="sticky-viewport" id="contact-vp">
+            <div class="content-wrapper">
+                
+                <div class="contact-header" id="contact-head">
+                    <h2 class="section-title">Get in <span class="gradient-text">Touch.</span></h2>
+                    <p class="section-subtitle">Let's collaborate on the next big thing.</p>
+                </div>
+                
+                <div class="contact-grid">
+                    <div class="tech-card js-contact-item" style="flex: 1; min-width: 280px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <h3 style="font-size: 24px; margin-bottom: 5px;">Tech & Engineering</h3>
+                        <p style="margin-bottom: 20px; font-size: 16px; color: var(--text-main);">par.sharma1110@gmail.com</p>
+                        <a href="https://www.linkedin.com/in/parmindersharma1110?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank" class="play-btn">LinkedIn</a>
+                    </div>
+                    
+                    <div class="tech-card js-contact-item" style="flex: 1; min-width: 280px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <h3 style="font-size: 24px; margin-bottom: 5px;">Music & Artistry</h3>
+                        <p style="margin-bottom: 20px; font-size: 16px; color: var(--text-main);">preet.rampuria01@gmail.com</p>
+                        <div style="display: flex; gap: 15px;">
+                            <a href="https://www.instagram.com/preet_rampuria/" target="_blank" class="play-btn">Instagram</a>
+                            <a href="https://youtube.com/@preetrampuria?si=A0dMgFSQ5W_UKj64" target="_blank" class="play-btn">YouTube</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            /* =========================================================
+               THREE.JS SETUP (EARTH, MOON, SHINING ORB STARS, SATELLITES)
+            ========================================================= */
+            const canvas = document.getElementById('globe-canvas');
+            const scene = new THREE.Scene();
+            
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 35; 
+
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); 
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); 
+            dirLight.position.set(20, 20, 20);
+            scene.add(dirLight);
+
+            const solarSystem = new THREE.Group();
+            scene.add(solarSystem);
+
+            const earthGroup = new THREE.Group();
+            solarSystem.add(earthGroup);
+
+            const moonOrbit = new THREE.Group();
+            solarSystem.add(moonOrbit);
+
+            // --- 1. EARTH ---
+            const coreGeometry = new THREE.SphereGeometry(14.8, 32, 32);
+            const coreMaterial = new THREE.MeshBasicMaterial({ color: 0x050505, transparent: true, opacity: 0.95 });
+            earthGroup.add(new THREE.Mesh(coreGeometry, coreMaterial));
+
+            const wireGeometry = new THREE.SphereGeometry(15, 32, 32); 
+            const wireMaterial = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.05 });
+            earthGroup.add(new THREE.Mesh(wireGeometry, wireMaterial));
+
+            const textureLoader = new THREE.TextureLoader();
+            const earthMapUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_lights_2048.png';
+            textureLoader.load(earthMapUrl, (texture) => {
+                const mapMaterial = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    color: 0xa855f7,
+                    transparent: true,
+                    opacity: 0.7,
+                    blending: THREE.AdditiveBlending 
+                });
+                earthGroup.add(new THREE.Mesh(new THREE.SphereGeometry(15.1, 32, 32), mapMaterial));
+            });
+
+
+            // --- 2. MOON ---
+            const moonGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+            const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.8 });
+            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            moon.position.set(22, 0, 0); 
+            moonOrbit.add(moon);
+            
+            const moonTextureUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg';
+            textureLoader.load(moonTextureUrl, (texture) => {
+                moonMaterial.map = texture;
+                moonMaterial.color.setHex(0xffffff); 
+                moonMaterial.needsUpdate = true;
+            });
+
+
+            // --- 3. STARFIELD (CIRCULAR SHINING ORBS) ---
+            function createStarTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                const cx = 16;
+                const cy = 16;
+                const radius = 16;
+
+                const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); 
+                gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)'); 
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)'); 
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)'); 
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsCount = 1500; 
+            const posArray = new Float32Array(starsCount * 3);
+            
+            for(let i = 0; i < starsCount; i++) {
+                const r = 40 + Math.random() * 60;
+                const theta = Math.random() * 2 * Math.PI;
+                const phi = Math.acos(Math.random() * 2 - 1);
+                
+                posArray[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                posArray[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+                posArray[i*3+2] = r * Math.cos(phi);
+            }
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const starsMaterial = new THREE.PointsMaterial({ 
+                size: 2.5, 
+                color: 0xffffff, 
+                transparent: true, 
+                opacity: 0.9,
+                map: createStarTexture(),
+                depthWrite: false, 
+                blending: THREE.AdditiveBlending 
+            });
+            const starMesh = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(starMesh);
+
+
+            // --- 4. CUSTOM METALLIC SATELLITES ---
+            const satellites = [];
+            
+            function createSatellite() {
+                const satGroup = new THREE.Group();
+                
+                const bodyGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.5, 16);
+                const bodyMat = new THREE.MeshStandardMaterial({ 
+                    color: 0xe0e0e0, 
+                    metalness: 1.0,  
+                    roughness: 0.2   
+                });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.rotation.z = Math.PI / 2;
+                satGroup.add(body);
+
+                const panelGeo = new THREE.BoxGeometry(0.8, 0.02, 0.4);
+                const panelMat = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ffff, 
+                    wireframe: true, 
+                    transparent: true, 
+                    opacity: 0.8 
+                });
+                
+                const panel1 = new THREE.Mesh(panelGeo, panelMat);
+                panel1.position.set(0, 0.25, 0);
+                satGroup.add(panel1);
+
+                const panel2 = new THREE.Mesh(panelGeo, panelMat);
+                panel2.position.set(0, -0.25, 0);
+                satGroup.add(panel2);
+
+                return satGroup;
+            }
+
+            for(let i=0; i<3; i++) {
+                const satOrbit = new THREE.Group();
+                satOrbit.rotation.x = Math.random() * Math.PI;
+                satOrbit.rotation.y = Math.random() * Math.PI;
+
+                const satMesh = createSatellite();
+                satMesh.position.set(16 + Math.random() * 2, 0, 0);
+                
+                satMesh.rotation.x = Math.random() * Math.PI;
+                satMesh.rotation.y = Math.random() * Math.PI;
+
+                satOrbit.add(satMesh);
+                
+                satOrbit.userData = { speed: 0.0025 + Math.random() * 0.0075 };
+                
+                solarSystem.add(satOrbit);
+                satellites.push({ orbit: satOrbit, mesh: satMesh });
+            }
+
+            solarSystem.rotation.z = 23.5 * Math.PI / 180; 
+
+
+            // --- RESIZE LOGIC ---
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+
+            // --- RENDER LOOP ---
+            const renderGlobe = () => {
+                requestAnimationFrame(renderGlobe);
+                
+                earthGroup.rotation.y += 0.0008; 
+
+                moonOrbit.rotation.y += 0.002; 
+                moon.rotation.y += 0.005; 
+
+                starMesh.rotation.y += 0.0002;
+                starMesh.rotation.x += 0.0001;
+
+                satellites.forEach(sat => {
+                    sat.orbit.rotation.y += sat.orbit.userData.speed;
+                    sat.mesh.rotation.x += 0.005; 
+                    sat.mesh.rotation.y += 0.0025;
+                });
+
+                renderer.render(scene, camera);
+            };
+            renderGlobe();
+
+
+            /* =========================================================
+               SCROLL LOGIC (Nav + Sections + Scroll Rotation)
+            ========================================================= */
+            const navbar = document.getElementById('navbar');
+            const songViewport = document.getElementById('song-vp');
+            let lastScrollY = window.scrollY;
+
+            const mapRange = (val, inMin, inMax, outMin, outMax) => {
+                if (val <= inMin) return outMin;
+                if (val >= inMax) return outMax;
+                return ((val - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
+            };
+
+            const handleScroll = () => {
+                const scrollY = window.scrollY;
+                const vh = window.innerHeight;
+
+                if (scrollY > lastScrollY && scrollY > 100) {
+                    navbar.classList.add('nav-hidden');
+                } else {
+                    navbar.classList.remove('nav-hidden');
+                }
+                lastScrollY = scrollY;
+
+                // Globe Rotation
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollProgress = scrollY / maxScroll;
+                solarSystem.rotation.y = scrollProgress * Math.PI;
+
+                // Profile Section
+                const profSec = document.getElementById('profile');
+                const profRect = profSec.getBoundingClientRect();
+                const profP = Math.max(0, Math.min(1, -profRect.top / (profRect.height - vh)));
+                
+                const profDetails = document.getElementById('prof-details');
+                const profViewport = document.getElementById('profile-vp');
+                
+                profDetails.style.opacity = mapRange(profP, 0.05, 0.2, 0, 1);
+                profDetails.style.transform = `translateY(${mapRange(profP, 0.05, 0.2, 100, 0)}px)`;
+                profViewport.style.opacity = mapRange(profP, 0.85, 1, 1, 0);
+
+                // Tech Section
+                const techSec = document.getElementById('tech');
+                const techRect = techSec.getBoundingClientRect();
+                const techP = Math.max(0, Math.min(1, -techRect.top / (techRect.height - vh)));
+                
+                const techViewport = document.getElementById('tech-vp');
+                const techHeader = document.getElementById('tech-head');
+                const techCards = document.querySelectorAll('.js-tech-card');
+
+                techHeader.style.opacity = mapRange(techP, 0, 0.05, 0, 1);
+                techHeader.style.transform = `translateY(${mapRange(techP, 0, 0.05, 50, 0)}px)`;
+
+                techCards.forEach((card, i) => {
+                    let start = 0.05 + (i * 0.12); 
+                    let end = start + 0.15;
+                    card.style.opacity = mapRange(techP, start, end, 0, 1);
+                    card.style.transform = `translateY(${mapRange(techP, start, end, 100, 0)}px)`;
+                });
+                techViewport.style.opacity = mapRange(techP, 0.85, 1, 1, 0);
+
+                // Songs Section
+                const songSec = document.getElementById('songs');
+                const songRect = songSec.getBoundingClientRect();
+                const songP = Math.max(0, Math.min(1, -songRect.top / (songRect.height - vh)));
+                
+                const songHeader = document.getElementById('song-head');
+                const songCards = document.querySelectorAll('.js-song-item');
+
+                songHeader.style.opacity = mapRange(songP, 0, 0.05, 0, 1);
+                songHeader.style.transform = `translateY(${mapRange(songP, 0, 0.05, 50, 0)}px)`;
+
+                songCards.forEach((card, i) => {
+                    let start = 0.05 + (i * 0.12);
+                    let end = start + 0.15;
+                    card.style.opacity = mapRange(songP, start, end, 0, 1);
+                    card.style.transform = `translateY(${mapRange(songP, start, end, 100, 0)}px)`;
+                });
+                
+                if (songViewport) {
+                    songViewport.style.opacity = mapRange(songP, 0.85, 1, 1, 0);
+                }
+
+                // Contact Section
+                const contactSec = document.getElementById('contact');
+                const contactRect = contactSec.getBoundingClientRect();
+                const contactP = Math.max(0, Math.min(1, -contactRect.top / (contactRect.height - vh)));
+                
+                const contactHeader = document.getElementById('contact-head');
+                const contactCards = document.querySelectorAll('.js-contact-item');
+
+                contactHeader.style.opacity = mapRange(contactP, 0, 0.05, 0, 1);
+                contactHeader.style.transform = `translateY(${mapRange(contactP, 0, 0.05, 50, 0)}px)`;
+
+                contactCards.forEach((card, i) => {
+                    let start = 0.05 + (i * 0.12);
+                    let end = start + 0.15;
+                    card.style.opacity = mapRange(contactP, start, end, 0, 1);
+                    card.style.transform = `translateY(${mapRange(contactP, start, end, 100, 0)}px)`;
+                });
+            };
+
+            window.addEventListener('scroll', handleScroll);
+            handleScroll();
+        });
+    </script>
+
+</body>
+</html>
